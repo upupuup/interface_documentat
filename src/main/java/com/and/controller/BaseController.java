@@ -20,12 +20,12 @@ public class BaseController implements Serializable{
 	/**
 	 * 成功标记
  	 */
-	public String code;
+	String code;
 
 	/**
 	 * 信息返回
 	 */
-	private String msg;
+	String msg;
 
 	/**
 	 * 数据集合

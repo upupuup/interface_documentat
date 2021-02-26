@@ -4,6 +4,7 @@ import com.and.constant.Constant;
 import com.and.response.BaseResponse;
 import com.and.utils.DatabaseTransformUtils;
 import org.apache.commons.collections.MapUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import java.util.Map;
  * @CreateDate:     2021/1/22 10:04
  */
 @RequestMapping("/")
+@CrossOrigin
 @RestController
 public class RequireInformationController extends BaseController {
 	@RequestMapping("/requireBaseInfo")
