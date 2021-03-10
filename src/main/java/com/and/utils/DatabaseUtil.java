@@ -26,6 +26,7 @@ public class DatabaseUtil {
 			Class.forName(DRIVER);
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("can not load jdbc driver", e);
+			throw new RuntimeException(e.getMessage());
 		}
 	}
 
@@ -40,6 +41,7 @@ public class DatabaseUtil {
 			conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
 		} catch (SQLException e) {
 			LOGGER.error("get connection failure", e);
+			throw new RuntimeException(e.getMessage());
 		}
 		return conn;
 	}
@@ -54,6 +56,7 @@ public class DatabaseUtil {
 				conn.close();
 			} catch (SQLException e) {
 				LOGGER.error("close connection failure", e);
+				throw new RuntimeException(e.getMessage());
 			}
 		}
 	}
@@ -75,12 +78,14 @@ public class DatabaseUtil {
 			}
 		} catch (SQLException e) {
 			LOGGER.error("getTableNames failure", e);
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			try {
 				rs.close();
 				closeConnection(conn);
 			} catch (SQLException e) {
 				LOGGER.error("close ResultSet failure", e);
+				throw new RuntimeException(e.getMessage());
 			}
 		}
 		return tableNames;
@@ -108,6 +113,7 @@ public class DatabaseUtil {
 			}
 		} catch (SQLException e) {
 			LOGGER.error("getColumnNames failure", e);
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			if (pStemt != null) {
 				try {
@@ -115,6 +121,7 @@ public class DatabaseUtil {
 					closeConnection(conn);
 				} catch (SQLException e) {
 					LOGGER.error("getColumnNames close pstem and connection failure", e);
+					throw new RuntimeException(e.getMessage());
 				}
 			}
 		}
@@ -143,6 +150,7 @@ public class DatabaseUtil {
 			}
 		} catch (SQLException e) {
 			LOGGER.error("getColumnTypes failure", e);
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			if (pStemt != null) {
 				try {
@@ -150,6 +158,7 @@ public class DatabaseUtil {
 					closeConnection(conn);
 				} catch (SQLException e) {
 					LOGGER.error("getColumnTypes close pstem and connection failure", e);
+					throw new RuntimeException(e.getMessage());
 				}
 			}
 		}
@@ -177,6 +186,7 @@ public class DatabaseUtil {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			if (rs != null) {
 				try {
@@ -184,6 +194,7 @@ public class DatabaseUtil {
 					closeConnection(conn);
 				} catch (SQLException e) {
 					LOGGER.error("getColumnComments close ResultSet and connection failure", e);
+					throw new RuntimeException(e.getMessage());
 				}
 			}
 		}

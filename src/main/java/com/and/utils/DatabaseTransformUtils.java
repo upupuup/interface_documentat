@@ -30,6 +30,7 @@ public class DatabaseTransformUtils {
 			Class.forName(DRIVER);
 		} catch (ClassNotFoundException e) {
 			LOGGER.error("can not load jdbc driver", e);
+			throw new RuntimeException(e.getMessage());
 		}
 	}
 
@@ -45,6 +46,7 @@ public class DatabaseTransformUtils {
 			conn = DriverManager.getConnection(URL, userName, password);
 		} catch (SQLException e) {
 			LOGGER.error("get connection failure", e);
+			throw new RuntimeException(e.getMessage());
 		}
 		return conn;
 	}
@@ -59,6 +61,7 @@ public class DatabaseTransformUtils {
 				conn.close();
 			} catch (SQLException e) {
 				LOGGER.error("close connection failure", e);
+				throw new RuntimeException(e.getMessage());
 			}
 		}
 	}
@@ -85,6 +88,7 @@ public class DatabaseTransformUtils {
 			}
 		} catch (SQLException e) {
 			LOGGER.error("getColumnNames failure", e);
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			if (pStemt != null) {
 				try {
@@ -92,6 +96,7 @@ public class DatabaseTransformUtils {
 					closeConnection(conn);
 				} catch (SQLException e) {
 					LOGGER.error("getColumnNames close pstem and connection failure", e);
+					throw new RuntimeException(e.getMessage());
 				}
 			}
 		}
@@ -119,6 +124,7 @@ public class DatabaseTransformUtils {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			if (rs != null) {
 				try {
@@ -126,6 +132,7 @@ public class DatabaseTransformUtils {
 					closeConnection(conn);
 				} catch (SQLException e) {
 					LOGGER.error("getColumnComments close ResultSet and connection failure", e);
+					throw new RuntimeException(e.getMessage());
 				}
 			}
 		}

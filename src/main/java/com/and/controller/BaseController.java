@@ -1,7 +1,7 @@
 package com.and.controller;
 
 import com.and.response.BaseResponse;
-import com.and.utils.BaseResponseUtil;
+import com.and.utils.BaseResponseUtils;
 import org.springframework.context.annotation.Scope;
 import org.apache.commons.lang.StringUtils;
 
@@ -40,7 +40,7 @@ public class BaseController implements Serializable{
         	if (StringUtils.isEmpty(msg)){
         		msg = "成功";
         	} 
-        	return BaseResponseUtil.getBaseResponse(code,msg,data);
+        	return BaseResponseUtils.getBaseResponse(code,msg,data);
     	}
     }
     
