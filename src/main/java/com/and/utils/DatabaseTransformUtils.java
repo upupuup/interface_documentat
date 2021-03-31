@@ -73,6 +73,7 @@ public class DatabaseTransformUtils {
 	 */
 	public static List<String> getColumnNames(String tableName, String ip, String dataBaseName, String userName, String password) {
 		List<String> columnNames = new ArrayList<>();
+		List<Integer> columnLengths = new ArrayList<>();
 		//与数据库的连接
 		Connection conn = getConnection(ip, dataBaseName, userName, password);
 		PreparedStatement pStemt = null;
@@ -85,6 +86,7 @@ public class DatabaseTransformUtils {
 			int size = rsmd.getColumnCount();
 			for (int i = 0; i < size; i++) {
 				columnNames.add(rsmd.getColumnName(i + 1));
+				columnLengths.add(rsmd.getPrecision(i + 1));
 			}
 		} catch (SQLException e) {
 			LOGGER.error("getColumnNames failure", e);
@@ -101,6 +103,51 @@ public class DatabaseTransformUtils {
 			}
 		}
 		return columnNames;
+	}
+
+	/**
+	 * 获取表中所有字段名称和字段长度
+	 * @param tableName 表名
+	 * @return
+	 */
+	public static Map<String, List> getColumnNamesAndLength(String tableName, String ip, String dataBaseName, String userName, String password) {
+		List<String> columnNames = new ArrayList<>();
+		List<Integer> columnLengths = new ArrayList<>();
+		List<String> columnTypes = new ArrayList<>();
+		//与数据库的连接
+		Connection conn = getConnection(ip, dataBaseName, userName, password);
+		PreparedStatement pStemt = null;
+		String tableSql = SQL + tableName;
+		try {
+			pStemt = conn.prepareStatement(tableSql);
+			//结果集元数据
+			ResultSetMetaData rsmd = pStemt.getMetaData();
+			//表列数
+			int size = rsmd.getColumnCount();
+			for (int i = 0; i < size; i++) {
+				columnNames.add(rsmd.getColumnName(i + 1));
+				columnLengths.add(rsmd.getColumnDisplaySize(i + 1));
+				columnTypes.add(rsmd.getColumnTypeName(i + 1));
+			}
+		} catch (SQLException e) {
+			LOGGER.error("getColumnNames failure", e);
+			throw new RuntimeException(e.getMessage());
+		} finally {
+			if (pStemt != null) {
+				try {
+					pStemt.close();
+					closeConnection(conn);
+				} catch (SQLException e) {
+					LOGGER.error("getColumnNames close pstem and connection failure", e);
+					throw new RuntimeException(e.getMessage());
+				}
+			}
+		}
+		Map<String, List> map = new HashMap<>();
+		map.put("columnNames", columnNames);
+		map.put("columnLengths", columnLengths);
+		map.put("columnTypes", columnTypes);
+		return map;
 	}
 
 	/**
@@ -159,6 +206,36 @@ public class DatabaseTransformUtils {
 			}
 		}
 		System.out.println(str);
+
+		return map;
+	}
+
+	/**
+	 * 获取信息
+	 */
+	public static Map<String, String> requireCommentsAndType(String tableName, String ip, String dataBaseName, String userName, String password) {
+		Map<String, List> columnNamesAndLength = getColumnNamesAndLength(tableName, ip, dataBaseName, userName, password);
+		List<String> columnNames = columnNamesAndLength.get("columnNames");
+		List<Integer> columnLengths = columnNamesAndLength.get("columnLengths");
+		List<String> columnTypes = columnNamesAndLength.get("columnTypes");
+		List<String> columnComments = getColumnComments(tableName, ip, dataBaseName, userName, password);
+		String str = "{" + "\n";
+		Map<String, String> map = new HashMap<>();
+		int size = columnNames.size();
+		for (int i = 0; i < size; i++) {
+			String columnName = underlineToCamelhump(columnNames.get(i));
+			String comment = columnComments.get(i);
+			Integer length = columnLengths.get(i);
+			String columnType = columnTypes.get(i);
+			map.put(columnName, comment + "-" + length + "=" + columnType + "*");
+			if (i == size - 1) {
+				str += "\t\"" + columnName + "\":\"\"" + " // " + comment + "\n}";
+			} else {
+				str += "\t\"" + columnName + "\":\"\"," + " // " + comment + "\n";
+			}
+		}
+		System.out.println(str);
+		map.put("tableName", LineHumpUtils.underlineToHump(tableName));
 
 		return map;
 	}
