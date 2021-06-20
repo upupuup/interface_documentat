@@ -5,14 +5,16 @@ import com.and.response.BaseResponse;
 import com.and.utils.DatabaseTransformUtils;
 import com.and.utils.DateUtils;
 import com.and.utils.LineHumpUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Author:         jiangzhihong
@@ -109,8 +111,25 @@ public class RequireInformationController extends BaseController {
 				System.out.println("EmptyUtils.isTooLong(\"" + comment + "\", " + tableName + ".get" + key.substring(0, 1).toUpperCase() + key.substring(1) + "(), "
 						+ length + ", true);");
 			} else if ("DECIMAL".equals(type)) {
-				System.out.println("EmptyUtils.isTooLong(\"" + comment + "\", " + tableName + ".get" + key.substring(0, 1).toUpperCase() + key.substring(1) + "(), "
-						+ (Integer.valueOf(length) - 2) + ", true);");
+				int m = value.indexOf(",");
+				Integer lowNum = null;
+				Integer highNum = null;
+				if (m > 0) {
+					if (k + 1 != m) {
+						lowNum = Integer.valueOf(value.substring(k + 1, m));
+					}
+					highNum = Integer.valueOf(value.substring(m + 1));
+				} else if (k + 1 != value.length()) {
+					lowNum = Integer.valueOf(value.substring(k + 1));
+				}
+				if (lowNum != null || highNum != null) {
+					// 校验范围
+					System.out.println("EmptyUtils.checkDoubleLength(\"" + comment + "\", " + tableName + ".get" + key.substring(0, 1).toUpperCase() + key.substring(1) + "(), " +
+							lowNum + ", " + highNum + ");");
+				} else {
+					// 不校验数值位数
+					System.out.println("EmptyUtils.isEmpty(\"" + comment + "\", " + tableName + ".get" + key.substring(0, 1).toUpperCase() + key.substring(1) + "());");
+				}
 			}
 
 		}
@@ -148,13 +167,19 @@ public class RequireInformationController extends BaseController {
 				System.out.println("    AND DATE_FORMAT(" + LineHumpUtils.humpToUnderline(key) + ", '%Y-%m-%d') &gt;= #{" + list + "[0]}");
 				System.out.println("    AND DATE_FORMAT(" + LineHumpUtils.humpToUnderline(key) + ", '%Y-%m-%d') &lt;= #{" + list + "[1]}");
 				System.out.println("</if>");
+			} else if (key.contains("Date")) {
+				String list = key + "List";
+				System.out.println("<if test=\""+ list +" != null and " + list +".size() > 0\">");
+				System.out.println("    " + LineHumpUtils.humpToUnderline(key) + " &gt;= #{" + list + "[0]}");
+				System.out.println("    " + LineHumpUtils.humpToUnderline(key) + " &lt;= #{" + list + "[1]}");
+				System.out.println("</if>");
 			} else if ("BIGINT".equals(type)){
 				System.out.println("<if test=\""+ key +" != null\">");
 				System.out.println("    AND " + LineHumpUtils.humpToUnderline(key) + " = #{" + key + "}");
 				System.out.println("</if>");
 			} else if ("INT".equals(type)) {
 				System.out.println("<if test=\""+ key +" != null\">");
-				System.out.println("    AND " + key + " = #{" + key + "}");
+				System.out.println("    AND " + LineHumpUtils.humpToUnderline(key) + " = #{" + key + "}");
 				System.out.println("</if>");
 			} else if ("VARCHAR".equals(type)) {
 				if (key.contains("TypeName")) {
@@ -182,6 +207,57 @@ public class RequireInformationController extends BaseController {
 	}
 
 	public static void main(String[] args) {
+		Set<Integer> set = new HashSet<>();
+		List<Integer> list = new ArrayList<>();
+		int num = 0;
+		while (num++ < 7) {
+			genList(set, list, num, 33);
+		}
+
+		Collections.sort(list, (p1, p2) -> p1.compareTo(p2));
+		set.clear();
+		genList(set, list, num, 16);
+		list.stream().forEach(ceil -> System.out.print(ceil + "  "));
+
+	}
+
+	private static void genList(Set<Integer> set, List<Integer> list, int num, int randomNum) {
+		Double value = Math.random() * randomNum;
+		int ceil = value.intValue();
+		if (set.contains(ceil) || ceil == 0) {
+			genList(set, list, num, randomNum);
+			return;
+		}
+		set.add(ceil);
+		list.add(ceil);
+	}
+
+	public static void reverseString(char[] s) {
+		int n = s.length;
+		for (int i = 0; i < n / 2; ++i) {
+			int j = n - 1 - i;
+			s[i] ^= s[j];
+			s[j] ^= s[i];
+			s[i] ^= s[j];
+		}
+	}
+
+	public static int[] twoSum(int[] nums, int target) {
+		int[] resultArray = new int[2];
+		Map<Integer, Integer> map = new HashMap<>();
+		for (int i = 0; i < nums.length; i++) {
+			map.put(nums[i], i);
+		}
+
+		for (int i = 0; i < nums.length; i++) {
+			int result = target - nums[i];
+			if (map.containsKey(result) && map.get(result) != i) {
+				resultArray[0] = i;
+				resultArray[1] = map.get(result);
+				return resultArray;
+			}
+		}
+		return resultArray;
 	}
 
 	/**
@@ -217,10 +293,10 @@ public class RequireInformationController extends BaseController {
 			width += "5000, ";
 		}
 
+		System.out.println("controller开始----------------");
 		// controller代码
 		// 生成注释
 		this.createComment("导出校验", tableName);
-		System.out.println("controller开始----------------");
 		// 校验导出的代码
 		System.out.println("//    @RequiresPermissions(\"" + tableName + ":exportExcel\")");
 		System.out.println("@PostMapping(value=\"/checkExportExcel\")");
@@ -229,14 +305,14 @@ public class RequireInformationController extends BaseController {
 		System.out.println("    // 查询是否有可以导出的数据");
 		System.out.println("    List<" + className + "> list = " + tableName + "Service.checkExportExcel(" + tableName + ");");
 		System.out.println("    // 查询出数据，直接返回数据");
-		System.out.println("    if (!CollectionUtils.isEmpty(list)) {");
+		System.out.println("    if (CollectionUtils.isNotEmpty(list)) {");
 		System.out.println("        return returnBaseResponse(InterfaceOpEnum.QUERY_OP);");
 		System.out.println("    }");
 		System.out.println("");
 		System.out.println("    // 没有数据，设置错误的编码和提示信息给前端");
 		System.out.println("    this.code = \"9999\";");
 		System.out.println("    this.msg = \"当前没有数据信息\";");
-		System.out.println("    return returnBaseResponse(InterfaceOpEnum.QUERY_OP);");
+		System.out.println("    return returnBaseResponse(InterfaceOpEnum.CHECK_EXPORT_OP);");
 		System.out.println("    }");
 		System.out.println();
 		// 生成注释
@@ -262,6 +338,7 @@ public class RequireInformationController extends BaseController {
 		// service代码
 		System.out.println("void exportExcel(" + className + " " + tableName + ", HttpServletResponse response) throws Exception;");
 		System.out.println();
+		System.out.println("serviceImpl开始----------------");
 
 		// 生成注释
 		this.createComment("导出校验", tableName);
@@ -272,7 +349,6 @@ public class RequireInformationController extends BaseController {
 		System.out.println("}");
 		System.out.println();
 
-		System.out.println("serviceImpl开始----------------");
 		// 生成注释
 		this.createComment("导出", tableName);
 		// serviceImpl代码
